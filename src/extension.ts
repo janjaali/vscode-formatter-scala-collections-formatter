@@ -1,0 +1,103 @@
+// The module 'vscode' contains the VS Code extensibility API
+// Import the module and reference it with the alias vscode in your code below
+import * as vscode from 'vscode';
+
+// this method is called when your extension is activated
+// your extension is activated the very first time the command is executed
+export function activate(context: vscode.ExtensionContext) {
+
+	vscode.languages.registerDocumentFormattingEditProvider('foo-lang', {
+		provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+			const firstLine = document.lineAt(0);
+
+			var textEditActions = [];
+
+			for (var lineNo = 0; lineNo < document.lineCount; lineNo++) {
+
+				const lineText = document.lineAt(lineNo).text;
+
+				const lineCharacters = lineText.split('');
+
+				const stringBorders: [number, number][] = lineCharacters
+					.reduce<number[]>((borders, char, index, arr) => {
+						if (char === '"') {
+							return [...borders, index];
+						} else {
+							return borders;
+						};
+					}, [])
+					.reduce<[[number, number][], number | null]>(([borders, buffer], cur) => {
+						if (!!buffer) {
+							return [[...borders, [buffer, cur]], null];
+						} else {
+							return [borders, cur];
+						}
+					}, [[], null])[0];
+
+				const containedInString = (index: number) => {
+					return stringBorders.some(([start, end]) => {
+						return start <= index && index < end;
+					});
+				};
+
+				const findFirstOccurrenceNotInString = (text: String) => lineCharacters.map((char, index) => {
+					if (char === text && !containedInString(index)) {
+						return [index];
+					} else {
+						return [];
+					}
+				}).reduce((acc, val) => acc.concat(val), []);
+
+				const openingBracketsNotInString = findFirstOccurrenceNotInString('(');
+
+				const spacesNotInString = findFirstOccurrenceNotInString(' ');
+
+				const didNotMatchString = "did not match ";
+
+				const didNotMatchStringIndex = lineText.indexOf(didNotMatchString);
+
+				const firstOpeningBracketNotInString = openingBracketsNotInString[0];
+
+				const firstOpeningBracketAfterDidNotMatch = openingBracketsNotInString
+					.filter(index => (index > didNotMatchStringIndex))[0];
+
+				if (firstOpeningBracketNotInString >= 0) {
+					textEditActions.push(
+						vscode.TextEdit.insert(new vscode.Position(lineNo, firstOpeningBracketNotInString + 1), '\n\t')
+					);
+				}
+
+				if (firstOpeningBracketAfterDidNotMatch >= 0) {
+					textEditActions.push(
+						vscode.TextEdit.insert(new vscode.Position(lineNo, firstOpeningBracketAfterDidNotMatch + 1), '\n\t')
+					);
+				}
+
+				spacesNotInString
+					.filter(index => {
+						return index < didNotMatchStringIndex || index > didNotMatchStringIndex + didNotMatchString.length;
+					})
+					.forEach(index => {
+						textEditActions.push(
+							vscode.TextEdit.insert(new vscode.Position(lineNo, index + 1), '\n\t')
+						);
+					});
+
+				if (didNotMatchStringIndex >= 0) {
+					textEditActions.push(
+						vscode.TextEdit.insert(new vscode.Position(lineNo, didNotMatchStringIndex), '\n\n')
+					);
+
+					textEditActions.push(
+						vscode.TextEdit.insert(new vscode.Position(lineNo, didNotMatchStringIndex + didNotMatchString.length), '\n\n')
+					);
+				}
+			}
+
+			return textEditActions;
+		}
+	});
+}
+
+// this method is called when your extension is deactivated
+export function deactivate() { }
