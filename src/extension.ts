@@ -52,7 +52,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 				const spacesNotInString = findFirstOccurrenceNotInString(' ');
 
-				const didNotMatchString = "did not match ";
+				const didNotMatchString = "did not contain the same elements as ";
 
 				const didNotMatchStringIndex = lineText.indexOf(didNotMatchString);
 
