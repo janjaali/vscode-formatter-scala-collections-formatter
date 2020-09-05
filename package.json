@@ -10,25 +10,22 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onLanguage:foo-lang"
+		"onLanguage:scala-collections"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"languages": [
 			{
-				"id": "foo-lang",
+				"id": "scala-collections",
 				"aliases": [
-					"Foo"
-				],
-				"extensions": [
-					"foo"
+					"scala-collections"
 				]
 			}
 		],
 		"commands": [
 			{
-				"command": "extension.format-foo",
-				"title": "(Bad) Format Foo Files"
+				"command": "extension.format-scala-collection",
+				"title": "Formats scala collection"
 			}
 		]
 	},

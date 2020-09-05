@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	vscode.languages.registerDocumentFormattingEditProvider('foo-lang', {
+	vscode.languages.registerDocumentFormattingEditProvider('scala-collections', {
 		provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
 			const firstLine = document.lineAt(0);
 
