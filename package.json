@@ -2,7 +2,9 @@
 	"name": "scala-collections-formatter",
 	"displayName": "scala-collections-formatter",
 	"description": "Formats scala collections",
-	"version": "0.0.1",
+	"publisher": "janjaali",
+	"version": "1.0.0-SNAPSHOT",
+	"repository": "https://github.com/janjaali/vscode-formatter-scala-collections-formatter",
 	"engines": {
 		"vscode": "^1.48.0"
 	},
