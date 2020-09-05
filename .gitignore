@@ -1,4 +1,8 @@
+# build
 out
+
+# dependencies
 node_modules
+
+#test
 .vscode-test/
-*.vsix
