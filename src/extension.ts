@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-export function activate(context: vscode.ExtensionContext) {
+export function activate() {
 
 	vscode.languages.registerDocumentFormattingEditProvider('scala-collections', {
 		provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
@@ -15,7 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 				const lineCharacters = lineText.split('');
 
 				const stringBorders: [number, number][] = lineCharacters
-					.reduce<number[]>((borders, char, index, arr) => {
+					.reduce<number[]>((borders, char, index) => {
 						if (char === '"') {
 							return [...borders, index];
 						} else {
