@@ -1,16 +1,27 @@
 import * as vscode from 'vscode';
 
+type DocumentLine = {
+	text: string,
+	lineNumber: number
+};
+
 export function activate() {
 
 	vscode.languages.registerDocumentFormattingEditProvider('scala-collections', {
 
 		provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
 
-			const numberOfLines = [...Array(document.lineCount).keys()];
+			const documentLines: DocumentLine[] = [...Array(document.lineCount).keys()].map(lineNumber => {
 
-			const textEditActions = numberOfLines.reduce<vscode.TextEdit[]>((editActions, lineNo) => {
+				return {
+					text: document.lineAt(lineNumber).text,
+					lineNumber: lineNumber,
+				};
+			});
 
-				const lineText = document.lineAt(lineNo).text;
+			const textEditActions = documentLines.reduce<vscode.TextEdit[]>((editActions, documentLine) => {
+
+				const lineText = documentLine.text;
 
 				const lineCharacters = lineText.split('');
 
@@ -61,16 +72,16 @@ export function activate() {
 
 				if (firstOpeningBracketNotInString >= 0) {
 
-					const insertNewLineAfterBracket = vscode.TextEdit.insert(new vscode.Position(lineNo, firstOpeningBracketNotInString + 1), '\n');
-					const insertTabInNewLine = vscode.TextEdit.insert(new vscode.Position(lineNo, firstOpeningBracketNotInString + 1), '\t');
+					const insertNewLineAfterBracket = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, firstOpeningBracketNotInString + 1), '\n');
+					const insertTabInNewLine = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, firstOpeningBracketNotInString + 1), '\t');
 
 					actions = [...actions, insertNewLineAfterBracket, insertTabInNewLine];
 				}
 
 				if (firstOpeningBracketAfterDidNotMatch >= 0) {
 
-					const insertNewLineAfterBracket = vscode.TextEdit.insert(new vscode.Position(lineNo, firstOpeningBracketAfterDidNotMatch + 1), '\n');
-					const insertTabInNewLine = vscode.TextEdit.insert(new vscode.Position(lineNo, firstOpeningBracketAfterDidNotMatch + 1), '\t');
+					const insertNewLineAfterBracket = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1), '\n');
+					const insertTabInNewLine = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1), '\t');
 
 					actions = [...actions, insertNewLineAfterBracket, insertTabInNewLine];
 				}
@@ -81,17 +92,17 @@ export function activate() {
 					})
 					.forEach(index => {
 
-						const insertNewLine = vscode.TextEdit.insert(new vscode.Position(lineNo, index + 1), '\n');
-						const insertTabInNewLine = vscode.TextEdit.insert(new vscode.Position(lineNo, index + 1), '\t');
+						const insertNewLine = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, index + 1), '\n');
+						const insertTabInNewLine = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, index + 1), '\t');
 
 						actions = [...actions, insertNewLine, insertTabInNewLine];
 					});
 
 				if (didNotMatchStringIndex >= 0) {
 
-					const insertTwoNewLinesBefore = vscode.TextEdit.insert(new vscode.Position(lineNo, didNotMatchStringIndex), '\n\n');
-					const insertTwoNewLinesAfter = vscode.TextEdit.insert(new vscode.Position(lineNo, didNotMatchStringIndex + didNotMatchString.length), '\n\n');
-					
+					const insertTwoNewLinesBefore = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, didNotMatchStringIndex), '\n\n');
+					const insertTwoNewLinesAfter = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, didNotMatchStringIndex + didNotMatchString.length), '\n\n');
+
 					actions = [...actions, insertTwoNewLinesBefore, insertTwoNewLinesAfter];
 				}
 
