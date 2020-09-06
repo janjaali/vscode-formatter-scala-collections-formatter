@@ -3,7 +3,9 @@ import * as vscode from 'vscode';
 export function activate() {
 
 	vscode.languages.registerDocumentFormattingEditProvider('scala-collections', {
+
 		provideDocumentFormattingEdits(document: vscode.TextDocument): vscode.TextEdit[] {
+			
 			const firstLine = document.lineAt(0);
 
 			var textEditActions = [];
