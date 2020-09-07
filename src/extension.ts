@@ -31,24 +31,37 @@ class TextEditActionCreators {
 	}
 };
 
-function characterPositionsNotInAString(char: String, text: String) {
+function characterPositionsNotEscapedInAString(char: String, text: String) {
 
 	const characters = text.split('');
 
-	const stringPositionIndices = characters
-		.flatMap((char, index) => {
-			return char === '"' ? [index] : [];
-		})
-		.reduce<[[number, number][], number | null]>(([stringPositionIndices, buffer], quotationMarkPosition) => {
+	const quotationMarkPositions = characters.flatMap((char, index) =>
+		char === '"' ? [index] : []
+	);
 
-			return !!buffer
-				? [[...stringPositionIndices, [buffer, quotationMarkPosition]], null]
-				: [stringPositionIndices, quotationMarkPosition];
+	type StringBoundary = {
+		start: number,
+		end: number
+	};
+
+	const stringBoundaries = quotationMarkPositions
+		.reduce<[StringBoundary[], number | null]>(([stringBoundaries, buffer], quotationMarkPosition) => {
+
+			if (!!buffer) {
+
+				const stringBoundary = { start: buffer, end: quotationMarkPosition };
+				const emptyBuffer = null;
+				return [[...stringBoundaries, stringBoundary], emptyBuffer];
+			} else {
+
+				const buffer = quotationMarkPosition;
+				return [stringBoundaries, buffer];
+			}
 		}, [[], null])[0];
 
 	const characterPositionContainedInAString = (index: number) => {
-		return stringPositionIndices.some(([start, end]) =>
-			start <= index && index < end
+		return stringBoundaries.some(stringBoundary =>
+			stringBoundary.start <= index && index < stringBoundary.end
 		);
 	};
 
@@ -65,7 +78,7 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		const text = documentLine.text;
 
-		const openingBracketPositionsNotInAString = characterPositionsNotInAString('(', documentLine.text);
+		const openingBracketPositionsNotInAString = characterPositionsNotEscapedInAString('(', documentLine.text);
 
 		const firstOpeningBracketNotInString = openingBracketPositionsNotInAString[0];
 
@@ -93,7 +106,7 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
 		}
 
-		const spacePositionsNotInAString = characterPositionsNotInAString(' ', documentLine.text);
+		const spacePositionsNotInAString = characterPositionsNotEscapedInAString(' ', documentLine.text);
 
 		spacePositionsNotInAString
 			.filter(index =>
