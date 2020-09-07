@@ -5,6 +5,21 @@ type DocumentLine = {
 	lineNumber: number
 };
 
+class TextEditActionCreators {
+
+	private static createInsertCharacterAction(character: string, lineNumber: number, position: number): vscode.TextEdit {
+		return vscode.TextEdit.insert(new vscode.Position(lineNumber, position), character);
+	}
+
+	static createInsertNewLineAction(lineNumber: number, position: number): vscode.TextEdit {
+		return TextEditActionCreators.createInsertCharacterAction('\n', lineNumber, position);
+	}
+
+	static createInsertTabAction(lineNumber: number, position: number): vscode.TextEdit {
+		return TextEditActionCreators.createInsertCharacterAction('\t', lineNumber, position);
+	}
+};
+
 function getDocumentLines(document: vscode.TextDocument): DocumentLine[] {
 
 	return [...Array(document.lineCount).keys()].map(lineNumber => {
@@ -14,10 +29,6 @@ function getDocumentLines(document: vscode.TextDocument): DocumentLine[] {
 			lineNumber: lineNumber,
 		};
 	});
-}
-
-function createInsertNewLineAction(lineNumber: number, position: number): vscode.TextEdit {
-	return vscode.TextEdit.insert(new vscode.Position(lineNumber, position), '\n');
 }
 
 function createInsertNewTabAction(lineNumber: number, position: number): vscode.TextEdit {
@@ -66,8 +77,8 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		if (!!firstOpeningBracketNotInString) {
 
-			const insertNewLineAfterBracket = createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
-			const insertTabInNewLine = createInsertNewTabAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
+			const insertNewLineAfterBracket = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
+			const insertTabInNewLine = TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
 
 			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
 		}
@@ -80,8 +91,8 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		if (!!firstOpeningBracketAfterDidNotMatch) {
 
-			const insertNewLineAfterBracket = createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
-			const insertTabInNewLine = createInsertNewTabAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
+			const insertNewLineAfterBracket = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
+			const insertTabInNewLine = TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
 
 			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
 		}
@@ -94,18 +105,24 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 			)
 			.forEach(index => {
 
-				const insertNewLine = createInsertNewLineAction(documentLine.lineNumber, index + 1);
-				const insertTabInNewLine = createInsertNewTabAction(documentLine.lineNumber, index + 1);
+				const insertNewLine = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, index + 1);
+				const insertTabInNewLine = TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, index + 1);
 
 				editActions = [...editActions, insertNewLine, insertTabInNewLine];
 			});
 
 		if (didNotMatchStringStartIndex >= 0) {
 
-			const insertTwoNewLinesBefore = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, didNotMatchStringStartIndex), '\n\n');
-			const insertTwoNewLinesAfter = vscode.TextEdit.insert(new vscode.Position(documentLine.lineNumber, didNotMatchStringStartIndex + didNotMatchString.length), '\n\n');
+			const insertTwoNewLinesBefore = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex);
+			const insertTwoNewLinesAfter = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex + didNotMatchString.length);
 
-			editActions = [...editActions, insertTwoNewLinesBefore, insertTwoNewLinesAfter];
+			editActions = [
+				...editActions,
+				insertTwoNewLinesBefore,
+				insertTwoNewLinesBefore,
+				insertTwoNewLinesAfter,
+				insertTwoNewLinesAfter
+			];
 		}
 
 		return editActions;
