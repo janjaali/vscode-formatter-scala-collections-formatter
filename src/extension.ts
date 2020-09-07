@@ -16,12 +16,40 @@ function getDocumentLines(document: vscode.TextDocument): DocumentLine[] {
 	});
 }
 
-function insertNewLineAction(lineNumber: number, position: number): vscode.TextEdit {
+function createInsertNewLineAction(lineNumber: number, position: number): vscode.TextEdit {
 	return vscode.TextEdit.insert(new vscode.Position(lineNumber, position), '\n');
 }
 
-function insertNewTabAction(lineNumber: number, position: number): vscode.TextEdit {
+function createInsertNewTabAction(lineNumber: number, position: number): vscode.TextEdit {
 	return vscode.TextEdit.insert(new vscode.Position(lineNumber, position), '\t');
+}
+
+function characterPositionsNotInAString(char: String, text: String) {
+
+	const characters = text.split('');
+
+	const stringPositionIndices = characters
+		.flatMap((char, index) => {
+			return char === '"' ? [index] : [];
+		})
+		.reduce<[[number, number][], number | null]>(([stringPositionIndices, buffer], quotationMarkPosition) => {
+
+			return !!buffer
+				? [[...stringPositionIndices, [buffer, quotationMarkPosition]], null]
+				: [stringPositionIndices, quotationMarkPosition];
+		}, [[], null])[0];
+
+	const characterPositionContainedInAString = (index: number) => {
+		return stringPositionIndices.some(([start, end]) =>
+			start <= index && index < end
+		);
+	};
+
+	return characters.flatMap((c, index) =>
+		c === char && !characterPositionContainedInAString(index)
+			? [index]
+			: []
+	);
 }
 
 function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
@@ -30,35 +58,7 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		const text = documentLine.text;
 
-		const characters = text.split('');
-
-		const characterPositionsNotInAString = (char: String) => {
-
-			const stringPositionIndices = characters
-				.flatMap((char, index) => {
-					return char === '"' ? [index] : [];
-				})
-				.reduce<[[number, number][], number | null]>(([stringPositionIndices, buffer], quotationMarkPosition) => {
-
-					return !!buffer
-						? [[...stringPositionIndices, [buffer, quotationMarkPosition]], null]
-						: [stringPositionIndices, quotationMarkPosition];
-				}, [[], null])[0];
-
-			const characterPositionContainedInAString = (index: number) => {
-				return stringPositionIndices.some(([start, end]) =>
-					start <= index && index < end
-				);
-			};
-
-			return characters.flatMap((c, index) =>
-				c === char && !characterPositionContainedInAString(index)
-					? [index]
-					: []
-			);
-		};
-
-		const openingBracketPositionsNotInAString = characterPositionsNotInAString('(');
+		const openingBracketPositionsNotInAString = characterPositionsNotInAString('(', documentLine.text);
 
 		const firstOpeningBracketNotInString = openingBracketPositionsNotInAString[0];
 
@@ -66,8 +66,8 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		if (!!firstOpeningBracketNotInString) {
 
-			const insertNewLineAfterBracket = insertNewLineAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
-			const insertTabInNewLine = insertNewTabAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
+			const insertNewLineAfterBracket = createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
+			const insertTabInNewLine = createInsertNewTabAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
 
 			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
 		}
@@ -80,13 +80,13 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		if (!!firstOpeningBracketAfterDidNotMatch) {
 
-			const insertNewLineAfterBracket = insertNewLineAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
-			const insertTabInNewLine = insertNewTabAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
+			const insertNewLineAfterBracket = createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
+			const insertTabInNewLine = createInsertNewTabAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
 
 			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
 		}
 
-		const spacePositionsNotInAString = characterPositionsNotInAString(' ');
+		const spacePositionsNotInAString = characterPositionsNotInAString(' ', documentLine.text);
 
 		spacePositionsNotInAString
 			.filter(index =>
@@ -94,8 +94,8 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 			)
 			.forEach(index => {
 
-				const insertNewLine = insertNewLineAction(documentLine.lineNumber, index + 1);
-				const insertTabInNewLine = insertNewTabAction(documentLine.lineNumber, index + 1);
+				const insertNewLine = createInsertNewLineAction(documentLine.lineNumber, index + 1);
+				const insertTabInNewLine = createInsertNewTabAction(documentLine.lineNumber, index + 1);
 
 				editActions = [...editActions, insertNewLine, insertTabInNewLine];
 			});
