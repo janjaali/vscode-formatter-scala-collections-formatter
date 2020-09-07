@@ -82,15 +82,12 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		const firstOpeningBracketNotInString = openingBracketPositionsNotInAString[0];
 
-		var editActions: vscode.TextEdit[] = [];
-
-		if (!!firstOpeningBracketNotInString) {
-
-			const insertNewLineAfterBracket = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
-			const insertTabInNewLine = TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1);
-
-			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
-		}
+		const firstOpeningBracketActions = !!firstOpeningBracketNotInString
+			? [
+				TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1),
+				TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, firstOpeningBracketNotInString + 1),
+			]
+			: [];
 
 		const didNotMatchString = "did not contain the same elements as ";
 		const didNotMatchStringStartIndex = text.indexOf(didNotMatchString);
@@ -98,43 +95,42 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 		const firstOpeningBracketAfterDidNotMatch = openingBracketPositionsNotInAString
 			.find(index => index > didNotMatchStringStartIndex);
 
-		if (!!firstOpeningBracketAfterDidNotMatch) {
-
-			const insertNewLineAfterBracket = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
-			const insertTabInNewLine = TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1);
-
-			editActions = [...editActions, insertNewLineAfterBracket, insertTabInNewLine];
-		}
+		const firstOpeningBracketAfterDidNotMatchActions = !!firstOpeningBracketAfterDidNotMatch
+			? [
+				TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1),
+				TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, firstOpeningBracketAfterDidNotMatch + 1),
+			]
+			: [];
 
 		const spacePositionsNotInAString = characterPositionsNotEscapedInAString(' ', documentLine.text);
 
-		spacePositionsNotInAString
+		const spaceActions = spacePositionsNotInAString
 			.filter(index =>
 				(index < didNotMatchStringStartIndex) || (index > didNotMatchStringStartIndex + didNotMatchString.length)
 			)
-			.forEach(index => {
+			.flatMap(index => {
 
 				const insertNewLine = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, index + 1);
 				const insertTabInNewLine = TextEditActionCreators.createInsertTabAction(documentLine.lineNumber, index + 1);
 
-				editActions = [...editActions, insertNewLine, insertTabInNewLine];
+				return [insertNewLine, insertTabInNewLine];
 			});
 
-		if (didNotMatchStringStartIndex >= 0) {
+		const didNotMatchStringStartActions = !!didNotMatchStringStartIndex
+			? [
+				TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex),
+				TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex),
+				TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex + didNotMatchString.length),
+				TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex + didNotMatchString.length),
+			]
+			: [];
 
-			const insertTwoNewLinesBefore = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex);
-			const insertTwoNewLinesAfter = TextEditActionCreators.createInsertNewLineAction(documentLine.lineNumber, didNotMatchStringStartIndex + didNotMatchString.length);
-
-			editActions = [
-				...editActions,
-				insertTwoNewLinesBefore,
-				insertTwoNewLinesBefore,
-				insertTwoNewLinesAfter,
-				insertTwoNewLinesAfter
-			];
-		}
-
-		return editActions;
+		return [
+			firstOpeningBracketActions,
+			firstOpeningBracketAfterDidNotMatchActions,
+			spaceActions,
+			didNotMatchStringStartActions,
+		].flat();
 	}
 
 	return documentLines.flatMap(documentLine => getTextEditActions(documentLine));
