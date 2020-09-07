@@ -31,10 +31,6 @@ function getDocumentLines(document: vscode.TextDocument): DocumentLine[] {
 	});
 }
 
-function createInsertNewTabAction(lineNumber: number, position: number): vscode.TextEdit {
-	return vscode.TextEdit.insert(new vscode.Position(lineNumber, position), '\t');
-}
-
 function characterPositionsNotInAString(char: String, text: String) {
 
 	const characters = text.split('');
