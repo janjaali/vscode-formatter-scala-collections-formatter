@@ -92,8 +92,14 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 		const didNotMatchString = "did not contain the same elements as ";
 		const didNotMatchStringStartIndex = text.indexOf(didNotMatchString);
 
+		const positionAfterDidNotMatchString = (position: number) => position > didNotMatchStringStartIndex;
+
+		const positionNotContainedInDidNotMatchString = (position: number) => (
+			(position < didNotMatchStringStartIndex) || (position > didNotMatchStringStartIndex + didNotMatchString.length)
+		);
+
 		const firstOpeningBracketAfterDidNotMatch = openingBracketPositionsNotInAString
-			.find(index => index > didNotMatchStringStartIndex);
+			.find(index => positionAfterDidNotMatchString(index));
 
 		const firstOpeningBracketAfterDidNotMatchActions = !!firstOpeningBracketAfterDidNotMatch
 			? [
@@ -104,9 +110,9 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 
 		const spacePositionsNotInAString = characterPositionsNotEscapedInAString(' ', documentLine.text);
 
-		const spaceActions = spacePositionsNotInAString
+		const spaceNotContainedInDidNotMatchStringActions = spacePositionsNotInAString
 			.filter(index =>
-				(index < didNotMatchStringStartIndex) || (index > didNotMatchStringStartIndex + didNotMatchString.length)
+				positionNotContainedInDidNotMatchString(index)
 			)
 			.flatMap(index => {
 
@@ -128,7 +134,7 @@ function getTextEditActions(documentLines: DocumentLine[]): vscode.TextEdit[] {
 		return [
 			firstOpeningBracketActions,
 			firstOpeningBracketAfterDidNotMatchActions,
-			spaceActions,
+			spaceNotContainedInDidNotMatchStringActions,
 			didNotMatchStringStartActions,
 		].flat();
 	}
