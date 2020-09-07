@@ -5,6 +5,17 @@ type DocumentLine = {
 	lineNumber: number
 };
 
+function getDocumentLines(document: vscode.TextDocument): DocumentLine[] {
+
+	return [...Array(document.lineCount).keys()].map(lineNumber => {
+
+		return {
+			text: document.lineAt(lineNumber).text,
+			lineNumber: lineNumber,
+		};
+	});
+}
+
 class TextEditActionCreators {
 
 	private static createInsertCharacterAction(character: string, lineNumber: number, position: number): vscode.TextEdit {
@@ -19,17 +30,6 @@ class TextEditActionCreators {
 		return TextEditActionCreators.createInsertCharacterAction('\t', lineNumber, position);
 	}
 };
-
-function getDocumentLines(document: vscode.TextDocument): DocumentLine[] {
-
-	return [...Array(document.lineCount).keys()].map(lineNumber => {
-
-		return {
-			text: document.lineAt(lineNumber).text,
-			lineNumber: lineNumber,
-		};
-	});
-}
 
 function characterPositionsNotInAString(char: String, text: String) {
 
